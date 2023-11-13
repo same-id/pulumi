@@ -122,6 +122,11 @@ func (sm *serviceSecretsManager) Encrypter() (config.Encrypter, error) {
 	return sm.crypter, nil
 }
 
+func (sm *serviceSecretsManager) ConfigOverridesManager(ps *workspace.ProjectStack) (bool, error) {
+	return ps.EncryptionSalt != "" || ps.EncryptedKey != "" ||
+		(ps.SecretsProvider != Type && ps.SecretsProvider != "default" && ps.SecretsProvider != ""), nil
+}
+
 func NewServiceSecretsManager(
 	client *client.Client, id client.StackIdentifier, info *workspace.ProjectStack,
 ) (secrets.Manager, error) {

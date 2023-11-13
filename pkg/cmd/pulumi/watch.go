@@ -109,7 +109,7 @@ func newWatchCmd() *cobra.Command {
 				return result.FromError(fmt.Errorf("gathering environment metadata: %w", err))
 			}
 
-			cfg, sm, err := getStackConfiguration(ctx, s, proj, nil)
+			cfg, sm, err := getStackConfiguration(ctx, s, proj)
 			if err != nil {
 				return result.FromError(fmt.Errorf("getting stack configuration: %w", err))
 			}

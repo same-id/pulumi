@@ -124,6 +124,21 @@ func (m *Manager) State() json.RawMessage               { return m.state }
 func (m *Manager) Encrypter() (config.Encrypter, error) { return m.crypter, nil }
 func (m *Manager) Decrypter() (config.Decrypter, error) { return m.crypter, nil }
 
+func (m *Manager) ConfigOverridesManager(ps *workspace.ProjectStack) (bool, error) {
+	var s cloudSecretsManagerState
+	if ps.EncryptionSalt != "" {
+		return true, nil
+	}
+	if ps.SecretsProvider == "" && ps.EncryptedKey == "" {
+		return false, nil
+	}
+	err := json.Unmarshal(m.State(), &s)
+	if err != nil {
+		return false, fmt.Errorf("unmarshalling cloud state: %w", err)
+	}
+	return ps.EncryptedKey != base64.StdEncoding.EncodeToString(s.EncryptedKey) || ps.SecretsProvider != s.URL, nil
+}
+
 func EditProjectStack(info *workspace.ProjectStack, state json.RawMessage) error {
 	info.EncryptionSalt = ""
 

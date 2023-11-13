@@ -115,6 +115,22 @@ func (sm *localSecretsManager) Encrypter() (config.Encrypter, error) {
 	return sm.crypter, nil
 }
 
+func (sm *localSecretsManager) ConfigOverridesManager(ps *workspace.ProjectStack) (bool, error) {
+	var s localSecretsManagerState
+	if ps.EncryptedKey != "" ||
+		(ps.SecretsProvider != Type && ps.SecretsProvider != "default" && ps.SecretsProvider != "") {
+		return true, nil
+	}
+	if ps.EncryptionSalt == "" {
+		return false, nil
+	}
+	err := json.Unmarshal(sm.State(), &s)
+	if err != nil {
+		return false, fmt.Errorf("unmarshalling passphrase state: %w", err)
+	}
+	return ps.EncryptionSalt != s.Salt, nil
+}
+
 func EditProjectStack(info *workspace.ProjectStack, state json.RawMessage) error {
 	info.EncryptedKey = ""
 	info.SecretsProvider = ""

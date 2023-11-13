@@ -26,6 +26,7 @@ import (
 	"github.com/pulumi/pulumi/pkg/v3/secrets/service"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource/config"
+	"github.com/pulumi/pulumi/sdk/v3/go/common/workspace"
 )
 
 // DefaultSecretsProvider is the default SecretsProvider to use when deserializing deployments.
@@ -108,6 +109,10 @@ func (csm *cachingSecretsManager) Decrypter() (config.Decrypter, error) {
 		decrypter: dec,
 		cache:     csm.cache,
 	}, nil
+}
+
+func (csm *cachingSecretsManager) ConfigOverridesManager(ps *workspace.ProjectStack) (bool, error) {
+	return csm.manager.ConfigOverridesManager(ps)
 }
 
 type cachingCrypter struct {

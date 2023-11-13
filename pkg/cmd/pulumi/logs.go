@@ -71,7 +71,7 @@ func newLogsCmd() *cobra.Command {
 				return err
 			}
 
-			cfg, sm, err := getStackConfiguration(ctx, s, proj, nil)
+			cfg, sm, err := getStackConfiguration(ctx, s, proj)
 			if err != nil {
 				return fmt.Errorf("getting stack configuration: %w", err)
 			}

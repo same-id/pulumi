@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource/config"
+	"github.com/pulumi/pulumi/sdk/v3/go/common/workspace"
 )
 
 // Manager provides the interface for providing stack encryption.
@@ -37,6 +38,8 @@ type Manager interface {
 	// Decrypter returns a `config.Decrypter` that can be used to decrypt values when deserializing a snapshot from a
 	// deployment, or an error if one can not be constructed.
 	Decrypter() (config.Decrypter, error)
+	// Returns whether stack configuration overrides the current manager.
+	ConfigOverridesManager(*workspace.ProjectStack) (bool, error)
 }
 
 // AreCompatible returns true if the two Managers are of the same type and have the same state.
