@@ -60,8 +60,10 @@ func getStackDecrypter(
 }
 
 func getStackSecretsManagerFromState(ctx context.Context, s backend.Stack) (secrets.Manager, error) {
+	fmt.Println("Whoop")
 	snap, err := s.Snapshot(ctx, stack.DefaultSecretsProvider)
 	if err != nil {
+		fmt.Println("Doop")
 		return nil, err
 	}
 
@@ -73,31 +75,12 @@ func getStackSecretsManagerFromState(ctx context.Context, s backend.Stack) (secr
 	return defaultSecretsManager, nil
 }
 
-func getStackSecretsManager(
+func getStackSecretsManagerFromConfig(
 	ctx context.Context, s backend.Stack, ps *workspace.ProjectStack,
 ) (secrets.Manager, bool, error) {
-	// Try to get the secret manager from the stack's current state snapshot.
-	sm, err := getStackSecretsManagerFromState(ctx, s)
-	if err != nil {
-		return nil, false, err
-	}
-	if sm != nil {
-		overrides, err := sm.ConfigOverridesManager(ps)
-		if err != nil {
-			return nil, false, err
-		}
-		if overrides {
-			return nil, false, fmt.Errorf(
-				"stack's current secrets provider does not match the configuration, " +
-					"please run `pulumi stack change-secrets-provider` to change the stack's secrets provider " +
-					"or `pulumi config refresh` to sync the configuration from the state",
-			)
-		}
-		return sm, false, nil
-	}
-
+	var sm secrets.Manager
+	var err error
 	oldConfig := deepcopy.Copy(ps).(*workspace.ProjectStack)
-
 	if ps.SecretsProvider != passphrase.Type && ps.SecretsProvider != "default" && ps.SecretsProvider != "" {
 		sm, err = cloud.NewCloudSecretsManager(
 			ps, ps.SecretsProvider, false /* rotateSecretsProvider */)
@@ -114,6 +97,40 @@ func getStackSecretsManager(
 	// Handle if the configuration changed any of EncryptedKey, etc
 	needsSave := needsSaveProjectStackAfterSecretManger(s, oldConfig, ps)
 	return stack.NewCachingSecretsManager(sm), needsSave, nil
+}
+
+func getStackSecretsManager(
+	ctx context.Context, s backend.Stack, ps *workspace.ProjectStack,
+) (secrets.Manager, bool, error) {
+	// Try to get the secret manager from the stack's current state snapshot.
+	sm, err := getStackSecretsManagerFromState(ctx, s)
+	if err != nil {
+		return nil, false, err
+	}
+	fmt.Println("Sup-9")
+	if sm != nil {
+		fmt.Println("Sup-0")
+		overrides, err := sm.ConfigOverridesManager(ps)
+		if err != nil {
+			return nil, false, err
+		}
+		if overrides {
+			return nil, false, fmt.Errorf(
+				"stack's current secrets provider does not match the configuration, " +
+					"please run `pulumi stack change-secrets-provider` to change the stack's secrets provider " +
+					"or `pulumi config refresh` to sync the configuration from the state",
+			)
+		}
+		fmt.Println("Sup-1")
+		return sm, false, nil
+	}
+	fmt.Println("Sup-2")
+	// Otherwise, try to get the secret manager from the stack's configuration.
+	sm, needsSave, err := getStackSecretsManagerFromConfig(ctx, s, ps)
+	if err != nil {
+		return nil, false, err
+	}
+	return sm, needsSave, nil
 }
 
 func needsSaveProjectStackAfterSecretManger(stack backend.Stack,

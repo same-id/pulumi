@@ -64,6 +64,9 @@ func symmetricCrypterFromPhraseAndState(phrase string, state string) (config.Cry
 	ignoredCtx := context.Background()
 	decrypted, err := decrypter.DecryptValue(ignoredCtx, state[indexN(state, ":", 2)+1:])
 	if err != nil || decrypted != "pulumi" {
+		fmt.Println("Oh shit!")
+		fmt.Println(phrase)
+		fmt.Println(salt)
 		return nil, ErrIncorrectPassphrase
 	}
 
@@ -172,6 +175,9 @@ func setCachedSecretsManager(state string, sm secrets.Manager) {
 		cache = make(map[string]secrets.Manager)
 	}
 	cache[state] = sm
+	fmt.Println("setCachedSecretsManager")
+	fmt.Println(state)
+	fmt.Printf("%v\n", sm)
 }
 
 func NewPassphraseSecretsManager(phrase string) (string, secrets.Manager, error) {
@@ -237,6 +243,8 @@ func GetPassphraseSecretsManager(phrase string, state string) (secrets.Manager, 
 func newPromptingPassphraseSecretsManagerFromState(state string) (secrets.Manager, error) {
 	// Check the cache first, if we have already seen this state before, return a cached value.
 	if cached, ok := getCachedSecretsManager(state); ok {
+		fmt.Println("getCachedSecretsManager")
+		fmt.Println(state)
 		return cached, nil
 	}
 
@@ -274,6 +282,7 @@ func NewPromptingPassphraseSecretsManagerFromState(state json.RawMessage) (secre
 	sm, err := newPromptingPassphraseSecretsManagerFromState(s.Salt)
 	switch {
 	case err == ErrIncorrectPassphrase:
+		fmt.Println("newLockedPasspharseSecretsManager!")
 		return newLockedPasspharseSecretsManager(state), nil
 	case err != nil:
 		return nil, fmt.Errorf("constructing secrets manager: %w", err)
@@ -304,6 +313,7 @@ func NewPromptingPassphraseSecretsManagerWithStdin(
 
 	// If we have a salt, we can just use it.
 	if info.EncryptionSalt != "" {
+		fmt.Println("newPromptingPassphraseSecretsManagerFromState!")
 		return newPromptingPassphraseSecretsManagerFromState(info.EncryptionSalt)
 	}
 
@@ -380,8 +390,10 @@ func promptForNewPassphrase(rotate, useStdin bool) (string, secrets.Manager, err
 func readPassphrase(prompt string, useEnv bool) (phrase string, interactive bool, err error) {
 	if useEnv {
 		if phrase, ok := os.LookupEnv("PULUMI_CONFIG_PASSPHRASE"); ok {
+			fmt.Println(phrase)
 			return phrase, false, nil
 		}
+		fmt.Println("No PULUMI_CONFIG_PASSPHRASE")
 		if phraseFile, ok := os.LookupEnv("PULUMI_CONFIG_PASSPHRASE_FILE"); ok && phraseFile != "" {
 			phraseFilePath, err := filepath.Abs(phraseFile)
 			if err != nil {

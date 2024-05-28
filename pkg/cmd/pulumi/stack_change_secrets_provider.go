@@ -158,8 +158,8 @@ func migrateOldConfigAndCheckpointToNewSecretsProvider(ctx context.Context,
 		return err
 	}
 
-	// Get the newly created secrets manager for the stack
-	newSecretsManager, needsSave, err := getStackSecretsManager(ctx, currentStack, reloadedProjectStack)
+	// Get the newly created secrets manager for the stack, directly from the config
+	newSecretsManager, needsSave, err := getStackSecretsManagerFromConfig(ctx, currentStack, reloadedProjectStack)
 	if err != nil {
 		return err
 	}

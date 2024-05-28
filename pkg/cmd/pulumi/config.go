@@ -1038,6 +1038,7 @@ func getAndSaveSecretsManager(
 ) (secrets.Manager, error) {
 	sm, needsSave, err := getStackSecretsManager(ctx, stack, workspaceStack)
 	if err != nil {
+		fmt.Println("Lol")
 		return nil, fmt.Errorf("get stack secrets manager: %w", err)
 	}
 	if needsSave {

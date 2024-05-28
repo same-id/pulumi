@@ -227,7 +227,8 @@ func DeserializeDeploymentV3(
 		if secretsProv == nil {
 			return nil, errors.New("deployment uses a SecretsProvider but no SecretsProvider was provided")
 		}
-
+		fmt.Printf("lol " + deployment.SecretsProviders.Type + "\n")
+		fmt.Printf("lol " + string(deployment.SecretsProviders.State) + "\n")
 		sm, err := secretsProv.OfType(deployment.SecretsProviders.Type, deployment.SecretsProviders.State)
 		if err != nil {
 			return nil, err
@@ -255,10 +256,12 @@ func DeserializeDeploymentV3(
 			collectCiphertexts(&ciphertexts, res.Inputs)
 			collectCiphertexts(&ciphertexts, res.Outputs)
 		}
+		fmt.Printf("texts: %v", ciphertexts)
 
 		// Decrypt the collected secrets and create a decrypter that will use the result as a cache.
 		cache, err := d.BulkDecrypt(ctx, ciphertexts)
 		if err != nil {
+			fmt.Println("Shmoop")
 			return nil, err
 		}
 		dec = newMapDecrypter(d, cache)

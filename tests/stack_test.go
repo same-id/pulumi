@@ -430,6 +430,39 @@ func TestStackBackups(t *testing.T) {
 }
 
 //nolint:paralleltest // mutates environment variables
+func TestChangeSecretsProviderToPassphraseNonInteractively(t *testing.T) {
+	e := ptesting.NewEnvironment(t)
+	e.Passphrase = "correct horse battery staple"
+	defer func() {
+		if !t.Failed() {
+			e.DeleteEnvironment()
+		}
+	}()
+
+	const stackName = "imulup"
+
+	integration.CreateBasicPulumiRepo(e)
+
+	e.Setenv("PATH", "/Users/sameid/src/pulumi/pkg/:"+os.Getenv("PATH"))
+
+	e.ImportDirectory("integration/stack_outputs/nodejs")
+
+	e.SetBackend(e.LocalURL())
+	e.NoPassphrase = true
+	e.RunCommand(
+		"pulumi", "stack", "init", stackName,
+	)
+
+	e.RunCommand("pulumi", "stack", "change-secrets-provider", "passphrase", "--stdin")
+
+	e.RunCommand("pulumi", "up", "--non-interactive", "--yes", "--skip-preview")
+
+	e.RunCommand("pulumi", "destroy", "--non-interactive", "--yes", "--skip-preview")
+
+	e.RunCommand("pulumi", "stack", "rm", "--yes")
+}
+
+//nolint:paralleltest // mutates environment variables
 func TestSecretsProviderFromState(t *testing.T) {
 	e := ptesting.NewEnvironment(t)
 	defer func() {
@@ -455,9 +488,16 @@ func TestSecretsProviderFromState(t *testing.T) {
 	{
 		integration.CreateBasicPulumiRepo(e)
 
+		// TODO: remove
+		e.Setenv("PATH", "/Users/sameid/src/pulumi/pkg/:"+os.Getenv("PATH"))
+
 		e.ImportDirectory("integration/stack_outputs/nodejs")
 
 		provider := fmt.Sprintf("gcpkms://projects/%s", gcpKmsKey)
+
+		so, se := e.RunCommand("pulumi", "version")
+		t.Logf("stdout: %s", so)
+		t.Logf("stderr: %s", se)
 
 		e.SetBackend(e.LocalURL())
 		e.RunCommand(
@@ -537,9 +577,14 @@ func TestSecretsProviderFromState(t *testing.T) {
 	// Set secure config using the same secrets provider - will persist
 	// "pulumi up" works
 	{
+		e.RunCommand("pulumi", "preview", "--non-interactive", "--save-plan", "plan.json")
+	}
+	// Set secure config using the same secrets provider - will persist
+	// "pulumi up" works
+	{
 		e.RunCommand("pulumi", "config", "set", "--secret", "token", "cookie")
 
-		e.RunCommand("pulumi", "up", "--non-interactive", "--yes", "--skip-preview")
+		e.RunCommand("pulumi", "up", "--non-interactive", "--yes", "--skip-preview", "--plan", "plan.json")
 
 		// Delete stack config.
 		err := os.Remove(stackConfigFile)
@@ -579,9 +624,25 @@ func TestSecretsProviderFromState(t *testing.T) {
 			"stack's current secrets provider does not match the configuration, "+
 			"please run `pulumi stack change-secrets-provider` to change the stack's "+
 			"secrets provider or `pulumi config refresh` to sync the configuration from the state\n")
+
 		// Delete stack config.
 		err = os.Remove(stackConfigFile)
 		assert.NoError(t, err)
+
+		// t.Setenv("PULUMI_CONFIG_PASSPHRASE", "pass1")
+		// e.Setenv("PULUMI_CONFIG_PASSPHRASE", "pass2")
+		e.Passphrase = "pass1"
+
+		so, se := e.RunCommand("pulumi", "stack", "change-secrets-provider", "passphrase")
+		t.Logf("stdout: %s", so)
+		t.Logf("stderr: %s", se)
+
+		// Delete stack config.
+		// err = os.Remove(stackConfigFile)
+		// assert.NoError(t, err)
+		e.RunCommand("pulumi", "config", "refresh")
+
+		e.RunCommand("pulumi", "up", "--non-interactive", "--yes", "--skip-preview")
 	}
 	// Now run pulumi destroy without stack file.
 	{

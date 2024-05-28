@@ -198,6 +198,8 @@ func createSecretsManager(
 	ctx context.Context, stack backend.Stack, secretsProvider string,
 	rotateSecretsProvider, creatingStack, useStdin bool,
 ) error {
+	fmt.Println("HERE!")
+	fmt.Println(secretsProvider)
 	// As part of creating the stack, we also need to configure the secrets provider for the stack.
 	// We need to do this configuration step for cases where we will be using with the passphrase
 	// secrets provider or one of the cloud-backed secrets providers.  We do not need to do this

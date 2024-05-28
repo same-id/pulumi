@@ -1,8 +1,11 @@
 {
     "go.buildTags": "all",
+    "go.lintFlags": ["--fast"],
     "go.testTimeout": "1h",
+    "go.testFlags": ["-v", "-count=1"],
     "go.testEnvVars": {
         "PULUMI_TEST_PYTHON_SHARED_VENV": "true",
+        "PULUMI_TEST_GCP_KEY": "utila-pulumi/locations/global/keyRings/pulumi/cryptoKeys/dev"
     },
     "gopls": {
         // A couple of modules get copied as part of builds and this confuse gopls as it sees the module name twice, just ignore the copy in the build folders.
